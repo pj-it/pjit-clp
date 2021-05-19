@@ -29,8 +29,21 @@ pjit_clp_init();
 if ( ! defined( 'PJIT_CLP_SECRET' ) ) return;
 
 /*
-    Handle activate/uninstall
+    Plugin functions
 */
+
+function pjit_clp_is_login_page_set() {
+    $args = array(
+        'post_type' => 'page',
+        'meta_value' => 'pjit-clp-template.php',
+        'numberposts' => 1
+    );
+    $result = get_posts( $args );
+    if ( ! empty( $result ) ) {
+        return true;
+    }
+    return false;
+}
 
 function pjit_clp_cleanup() {
     $secret = PJIT_CLP_SECRET;
@@ -42,10 +55,14 @@ function pjit_clp_cleanup() {
 function pjit_clp_uninstall() {
     $secret = get_option( 'pjit_clp_secret' );
     if ( $secret ) {
-        pjit_clp_cleanup();    
         delete_option( 'pjit_clp_secret' );
+        pjit_clp_cleanup();
     }
 }
+
+/*
+    Handle activate / deactivate / uninstall
+*/
 
 register_activation_hook( __FILE__, 'pjit_clp_init' );
 register_deactivation_hook( __FILE__, 'pjit_clp_cleanup' );
@@ -82,7 +99,7 @@ add_filter( 'page_template', 'pjit_clp_load_template' );
 function pjit_clp_filter_login_url( $login_url ) {
     $key = $_GET['key'];
     $secret = PJIT_CLP_SECRET;
-    if ( ! isset( $_COOKIE[$secret] ) && ! is_user_logged_in() ) {
+    if ( pjit_clp_is_login_page_set() && ! is_user_logged_in() && ! isset( $_COOKIE[$secret] )  ) {
         if ( isset( $key ) && ( $key === $secret ) ) {
             setcookie( $secret, '1', time()+60*60*24*1, '/', $_SERVER['HTTP_HOST'], false, true );
         } else {
@@ -96,13 +113,13 @@ function pjit_clp_filter_login_url( $login_url ) {
 add_filter( 'login_url', 'pjit_clp_filter_login_url' );
 
 /*
-    Cleanup after user logout
+    Cleanup when user logs out and goes back to home page
 */
 
-function pjit_clp_logout() {
-    pjit_clp_cleanup();
-    wp_redirect( home_url( '/' ) );
-    exit;
+function pjit_clp_homepage_cleanup() {
+    if ( ! is_user_logged_in() ) {
+        pjit_clp_cleanup();
+    }
 }
 
-add_action( 'wp_logout', 'pjit_clp_logout' );
+add_action( 'template_redirect', 'pjit_clp_homepage_cleanup' );

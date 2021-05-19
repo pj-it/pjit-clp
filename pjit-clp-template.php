@@ -1,4 +1,8 @@
 <?php
+/*
+    Custom login page plugin - login page template
+*/
+
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
 if ( ! defined( 'PJIT_CLP_SECRET' ) ) return;
