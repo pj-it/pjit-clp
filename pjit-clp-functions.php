@@ -1,19 +1,18 @@
 <?php
-
 /*
     Plugin functions
 */
 
+// Plugin initialize
+
 function pjit_clp_init() {
-    $secret = get_option( 'pjit_clp_secret' );
-    if ( ! $secret ) {
-        $secret = strtolower( str_shuffle( md5( microtime() ) ) );
-        add_option( 'pjit_clp_secret', $secret );
-    }
-    if ( ! empty( $secret ) ) {
-        define( 'PJIT_CLP_SECRET', $secret );
-    }
+    $secret = get_option( PJIT_CLP_OPTION_NAME );
+    if ( empty( $secret ) ) return false;
+    define( 'PJIT_CLP_SECRET', $secret );
+    return true;
 }
+
+// Check if new login page is set
 
 function pjit_clp_is_login_page_set() {
     $args = array(
@@ -21,43 +20,69 @@ function pjit_clp_is_login_page_set() {
         'meta_value' => PJIT_CLP_TEMPLATE_FILE,
         'numberposts' => 1
     );
-    $result = get_posts( $args );
-    if ( ! empty( $result ) ) {
-        return true;
-    }
-    return false;
+    if ( empty( get_posts( $args ) ) return false;
+    return true;
 }
 
-function pjit_clp_cleanup() {
+// Set plugin cookie
+
+function pjit_clp_set_cookie() {
+    setcookie( PJIT_CLP_SECRET, '1', time()+60*60*24*1, '/', $_SERVER['HTTP_HOST'], false, true );
+}
+
+// Remove plugin cookie
+
+function pjit_clp_remove_cookie() {
     if ( isset( $_COOKIE[PJIT_CLP_SECRET] ) ) {
         setcookie( PJIT_CLP_SECRET, '', time() - 3600, '/' );
     }
 }
 
-function pjit_clp_uninstall() {
-    if ( get_option( 'pjit_clp_secret' ) ) {
-        delete_option( 'pjit_clp_secret' );
+// Plugin activate, create secret identifier
+
+function pjit_clp_activate() {
+    if ( ! pjit_clp_init() ) {
+        $secret = strtolower( str_shuffle( md5( microtime() ) ) );
+        if ( add_option( PJIT_CLP_OPTION_NAME, $secret ) {
+            define( 'PJIT_CLP_SECRET', $secret );
+            pjit_clp_set_cookie();
+        }
     }
-    pjit_clp_cleanup();
+    pjit_clp_set_cookie();
 }
 
+// Remove options from db on plugin uninstall
+
+function pjit_clp_uninstall() {
+    if ( get_option( PJIT_CLP_OPTION_NAME ) ) {
+        delete_option( PJIT_CLP_OPTION_NAME );
+    }
+    pjit_clp_remove_cookie();
+}
+
+// Add custom login page template to the template select dropdown
+
 function pjit_clp_add_template( $page_templates ) {
-    $page_templates['pjit-clp-template.php'] = 'Custom login page';
+    $page_templates[PJIT_CLP_TEMPLATE_FILE] = PJIT_CLP_TEMPLATE_NAME;
     return $page_templates;
 }
 
+// Load template file from plugin directory
+
 function pjit_clp_load_template( $page_template ) {
-    if ( 'pjit-clp-template.php' === get_page_template_slug() ) {
+    if ( PJIT_CLP_TEMPLATE_FILE === get_page_template_slug() ) {
         $page_template = PJIT_CLP_PLUGIN_DIR . PJIT_CLP_TEMPLATE_FILE;
     }
     return $page_template;
 }
 
+// Filter login url
+
 function pjit_clp_filter_login_url( $login_url ) {
-    $key = $_GET['key'];
+    $secret = $_GET['secret'];
     if ( pjit_clp_is_login_page_set() && ! is_user_logged_in() && ! isset( $_COOKIE[PJIT_CLP_SECRET] )  ) {
-        if ( isset( $key ) && ( $key === PJIT_CLP_SECRET ) ) {
-            setcookie( PJIT_CLP_SECRET, '1', time()+60*60*24*1, '/', $_SERVER['HTTP_HOST'], false, true );
+        if ( isset( $secret ) && ( $secret === PJIT_CLP_SECRET ) ) {
+            pjit_clp_set_cookie();
         } else {
             wp_redirect( home_url( '/' ) );
             exit;
@@ -66,8 +91,10 @@ function pjit_clp_filter_login_url( $login_url ) {
     return $login_url;
 }
 
+// Cleanup when on home page
+
 function pjit_clp_homepage_cleanup() {
     if ( ! is_user_logged_in() ) {
-        pjit_clp_cleanup();
+        pjit_clp_remove_cookie();
     }
 }
