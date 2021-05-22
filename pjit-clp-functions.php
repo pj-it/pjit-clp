@@ -3,11 +3,16 @@
     Plugin functions
 */
 
-// Plugin initialize
+// Plugin initialize, create secret identifier if not alreadey set
 
 function pjit_clp_init() {
     $secret = get_option( PJIT_CLP_OPTION_NAME );
-    if ( empty( $secret ) ) return false;
+    if ( empty( $secret ) ) {
+        $secret = strtolower( str_shuffle( md5( microtime() ) ) );
+        if ( ! add_option( PJIT_CLP_OPTION_NAME, $secret ) ) {
+            return false;
+        }
+    }
     define( 'PJIT_CLP_SECRET', $secret );
     return true;
 }
@@ -20,7 +25,9 @@ function pjit_clp_is_login_page_set() {
         'meta_value' => PJIT_CLP_TEMPLATE_FILE,
         'numberposts' => 1
     );
-    if ( empty( get_posts( $args ) ) ) return false;
+    if ( empty( get_posts( $args ) ) ) {
+        return false;
+    }
     return true;
 }
 
@@ -38,17 +45,14 @@ function pjit_clp_remove_cookie() {
     }
 }
 
-// Plugin activate, create secret identifier
+// Plugin activate / deactivate
 
 function pjit_clp_activate() {
-    if ( ! pjit_clp_init() ) {
-        $secret = strtolower( str_shuffle( md5( microtime() ) ) );
-        if ( add_option( PJIT_CLP_OPTION_NAME, $secret ) ) {
-            define( 'PJIT_CLP_SECRET', $secret );
-            pjit_clp_set_cookie();
-        }
-    }
     pjit_clp_set_cookie();
+}
+
+function pjit_clp_deactivate() {
+    pjit_clp_remove_cookie();
 }
 
 // Remove options from db on plugin uninstall

@@ -25,7 +25,7 @@ if ( ! pjit_clp_init() ) return; // Do nothing if plugin fails to initialize for
 // Handle activate / deactivate / uninstall
 
 register_activation_hook( __FILE__, 'pjit_clp_activate' );
-register_deactivation_hook( __FILE__, 'pjit_clp_cleanup' );
+register_deactivation_hook( __FILE__, 'pjit_clp_deactivate' );
 register_uninstall_hook( __FILE__, 'pjit_clp_uninstall' );
 
 // Add custom login page template to the template select dropdown
