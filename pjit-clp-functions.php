@@ -34,14 +34,14 @@ function pjit_clp_is_login_page_set() {
 // Set plugin cookie
 
 function pjit_clp_set_cookie() {
-    setcookie( PJIT_CLP_SECRET, '1', time()+60*60*24*1, '/', $_SERVER['HTTP_HOST'], false, true );
+    setcookie( PJIT_CLP_SECRET, '1', time() + 60*60*24*1, '/', $_SERVER['HTTP_HOST'], false, true );
 }
 
 // Remove plugin cookie
 
 function pjit_clp_remove_cookie() {
     if ( isset( $_COOKIE[PJIT_CLP_SECRET] ) ) {
-        setcookie( PJIT_CLP_SECRET, '', time() - 3600, '/' );
+        setcookie( PJIT_CLP_SECRET, '', time() - 3600, '/', $_SERVER['HTTP_HOST'], false, true );
     }
 }
 
@@ -98,7 +98,7 @@ function pjit_clp_filter_login_url( $login_url ) {
 // Cleanup when on home page
 
 function pjit_clp_homepage_cleanup() {
-    if ( ! is_user_logged_in() ) {
+    if ( ! is_user_logged_in() && is_singular() ) {
         pjit_clp_remove_cookie();
     }
 }
