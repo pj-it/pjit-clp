@@ -40,6 +40,6 @@ add_filter( 'page_template', 'pjit_clp_load_template' );
 
 add_filter( 'login_url', 'pjit_clp_filter_login_url' );
 
-// Cleanup when user logs out and goes back to home page
+// Cleanup when user logs out and leaves the login page
 
-add_action( 'template_redirect', 'pjit_clp_homepage_cleanup' );
+add_action( 'template_redirect', 'pjit_clp_cleanup_after_logout' );

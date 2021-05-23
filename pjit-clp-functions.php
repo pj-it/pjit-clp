@@ -3,7 +3,7 @@
     Plugin functions
 */
 
-// Plugin initialize, create secret identifier if not alreadey set
+// Plugin initialize, create secret identifier if not already set
 
 function pjit_clp_init() {
     $secret = get_option( PJIT_CLP_OPTION_NAME );
@@ -95,10 +95,10 @@ function pjit_clp_filter_login_url( $login_url ) {
     return $login_url;
 }
 
-// Cleanup when on home page
+// Cleanup when user logs out and leaves the login page
 
 function pjit_clp_homepage_cleanup() {
-    if ( ! is_user_logged_in() && is_singular() ) {
+    if ( ! is_user_logged_in() && ( is_front_page() || is_singular() ) ) {
         pjit_clp_remove_cookie();
     }
 }
